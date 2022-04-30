@@ -1,0 +1,10 @@
+{
+    "tpiid" : "s2fgtej4hk8v",
+
+    "qiniu" : {
+        "QN_ACCESS_KEY" : "MoVNHexgySseNvZuQvjR-aBPsRnOST06X1YVzXW9",
+        "QN_SECRET_KEY" : "9Ho3IMrZTF9a4c-6aX8HCdnzIiEzMtnsdrju1xAy",
+        "BUCKET_NAME"   : "educoder-control"
+    }
+    
+}

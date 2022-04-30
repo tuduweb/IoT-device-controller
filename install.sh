@@ -61,6 +61,29 @@ fi
     # step "Fetching OBS tags..."
     # /usr/bin/git fetch origin --tags
 
+install_apt(){
+    echo install_apt
+    echo ========================================================
+}
+
+install_pipPackage(){
+    echo install_pipPackage
+    echo ========================================================
+}
+
+install_opencv(){
+    echo install_opencv
+    echo ========================================================
+    install_apt
+    install_pipPackage
+}
+
+#检查Python版本..如果不是支持范围下, 那么自行安装一个版本
+check_python(){
+    #
+}
+
+
 
 setconfig(){
 	configpath=$clashdir/mark
@@ -103,7 +126,7 @@ gettar(){
 
 }
 
-
+# 安装目录设置程序
 setdir(){
     if [ -n "$systype" ];then
         [ "$systype" = "Padavan" ] && dir=/etc/storage
@@ -156,7 +179,7 @@ setdir(){
 }
 
 
-####### 主程序 ######
+############################ 主程序 ############################
 webget /tmp/clashversion https://raw.githubusercontent.com/juewuy/ShellClash/1.5.1/bin/release_version
 cat /tmp/clashversion
 
@@ -167,4 +190,8 @@ url_dl=172.20.144.113:8082
 tarurl=$url_dl/bin/client.tar.gz
 appdir=~/appdemo
 
+# 安装依赖库
+install_opencv
+# 主程序tar包
 gettar
+# 运行包中的脚本..进入到下一个阶段?
