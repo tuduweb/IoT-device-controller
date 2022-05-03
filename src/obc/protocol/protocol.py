@@ -26,7 +26,7 @@ from utils.codec import Codec
 
 class AsyncConnClient(object):
 
-    def __init__(self, host, product_id, device_name, device_secret,
+    def __init__(self, host, client_id, device_name, device_secret,
                     websocket=False, tls=True, logger=None):
         self.__logger = logger
         self.__tls = tls
@@ -34,16 +34,19 @@ class AsyncConnClient(object):
         self.__key_mode = True
         # self.__iot_ca_crt = self.__IOT_CA_CRT
         self.__mqtt_client = None
-        self.__product_id = product_id
+        self.__product_id = 1#product_id
         self.__device_name = device_name
         self.__device_secret = device_secret
         self.__host = host
         self.__psk = None
+
+        self.__client_id = client_id
+
         self.__certificate = self.Certificate()
         self.__codec = Codec()
         self.__set_mqtt_default_param()
 
-        self.__init(host, product_id, device_name, device_secret)
+        self.__init(host, client_id, device_name, device_secret)
 
     class Certificate:
         def __init__(self):
@@ -73,16 +76,16 @@ class AsyncConnClient(object):
         self.__mqtt_command_timeout = 5
         pass
 
-    def _generate_pwss(self, client_id, device_secret):
-        self.__psk = base64.b64decode(device_secret.encode("utf-8"))
+    # def _generate_pwss(self, client_id, device_secret):
+    #     self.__psk = base64.b64decode(device_secret.encode("utf-8"))
 
-        timestamp = str(int(round(time.time() * 1000)))
-        conn_id = ''.join(random.sample(string.ascii_letters + string.digits, 5))
-        username = client_id + ";21010406;" + conn_id + ";" + timestamp
-        sign = hmac.new(self.__psk, username.encode("utf-8"), hashlib.sha1).hexdigest()
-        password = "%s;hmacsha1" % (sign)
+    #     timestamp = str(int(round(time.time() * 1000)))
+    #     conn_id = ''.join(random.sample(string.ascii_letters + string.digits, 5))
+    #     username = client_id + ";21010406;" + conn_id + ";" + timestamp
+    #     sign = hmac.new(self.__psk, username.encode("utf-8"), hashlib.sha1).hexdigest()
+    #     password = "%s;hmacsha1" % (sign)
 
-        return username, password
+    #     return username, password
 
     def _ssl_init(self, key_mode):
         # 密钥认证
@@ -100,10 +103,10 @@ class AsyncConnClient(object):
                                         cert_reqs=ssl.CERT_REQUIRED, tls_version=ssl.PROTOCOL_SSLv23)
         pass
 
-    def __init(self, host, product_id, device_name, device_secret):
-        client_id = product_id + device_name
-        username, password = self._generate_pwss(client_id, device_secret)
-
+    def __init(self, host, client_id, device_name, device_secret):
+        #username, password = self._generate_pwss(client_id, device_secret)
+        username = 'pahotest'
+        password = username
         if self.__mqtt_protocol == "MQTTv311":
             mqtt_protocol_version = mqtt.MQTTv311
         elif self.__mqtt_protocol == "MQTTv31":

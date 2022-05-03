@@ -198,6 +198,11 @@ class DeviceInfoProvider(object):
         self.__cert_file = None
         self.__private_key_file = None
         self.__region = None
+
+        ## 20220503
+        self.__device_uuid = None
+        self.__current_tpiid = None
+
         if self.__logger is not None:
             self.__logger.info('device_info file {}'.format(file_path))
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -211,11 +216,20 @@ class DeviceInfoProvider(object):
             self.__cert_file = self.__json_data['cert_deviceinfo']['devCertFile']
             self.__private_key_file = self.__json_data['cert_deviceinfo']['devPrivateKeyFile']
             self.__region = self.__json_data["region"]
+
+            self.__device_uuid = self.__json_data["uuid"]
+            self.__current_tpiid = self.__json_data["tpiid"]
+
         if self.__logger is not None:
             self.__logger.info(
                 "device name: {}, product id: {}, product secret: {}, device secret: {}".
                 format(self.__device_name, self.__product_id,
                         self.__product_secret, self.__device_secret))
+
+
+    def _init_deviceInfo_file(self):
+        
+        pass
 
     def update_config_file(self, psk):
         with open(self.__file_path, '+r', encoding='utf-8') as f:
@@ -249,6 +263,14 @@ class DeviceInfoProvider(object):
 
         self.__private_key_file = privateKey
         pass
+
+    @property
+    def device_uuid(self):
+        return self.__device_uuid
+    
+    @property
+    def plaform_tpiid(self):
+        return self.__current_tpiid
 
     @property
     def auth_mode(self):
@@ -290,115 +312,6 @@ class DeviceInfoProvider(object):
     def json_data(self):
         return self.__json_data
 
-
-class DeviceInfoProvider(object):
-    def __init__(self, file_path):
-        self.__file_path = file_path
-        # self.__logger = logger
-        self.__log_provider = LoggerProvider()
-        self.__logger = self.__log_provider.logger
-        self.__logger.info('device_info file {}'.format(file_path))
-
-        self.__auth_mode = None
-        self.__device_name = None
-        self.__product_id = None
-        self.__product_secret = None
-        self.__device_secret = None
-        self.__ca_file = None
-        self.__cert_file = None
-        self.__private_key_file = None
-        self.__region = None
-        if self.__logger is not None:
-            self.__logger.info('device_info file {}'.format(file_path))
-        with open(file_path, 'r', encoding='utf-8') as f:
-            self.__json_data = json.loads(f.read())
-            self.__auth_mode = self.__json_data['auth_mode']
-            self.__device_name = self.__json_data['deviceName']
-            self.__product_id = self.__json_data['productId']
-            self.__product_secret = self.__json_data['productSecret']
-            self.__device_secret = self.__json_data['key_deviceinfo']['deviceSecret']
-            self.__ca_file = self.__json_data['cert_deviceinfo']['devCaFile']
-            self.__cert_file = self.__json_data['cert_deviceinfo']['devCertFile']
-            self.__private_key_file = self.__json_data['cert_deviceinfo']['devPrivateKeyFile']
-            self.__region = self.__json_data["region"]
-        if self.__logger is not None:
-            self.__logger.info(
-                "device name: {}, product id: {}, product secret: {}, device secret: {}".
-                format(self.__device_name, self.__product_id,
-                        self.__product_secret, self.__device_secret))
-
-    def update_config_file(self, psk):
-        with open(self.__file_path, '+r', encoding='utf-8') as f:
-            t = f.read()
-            t = t.replace(self.__device_secret, psk)
-            f.seek(0, 0)
-            f.write(t)
-            f.truncate()
-
-            self.__device_secret = psk
-        pass
-
-    def update_cert_config_file(self, cert):
-        with open(self.__file_path, '+r', encoding='utf-8') as f:
-            t = f.read()
-            t = t.replace(self.__cert_file, cert)
-            f.seek(0, 0)
-            f.write(t)
-            f.truncate()
-
-        self.__cert_file = cert
-        pass
-
-    def update_privateKey_config_file(self, privateKey):
-        with open(self.__file_path, '+r', encoding='utf-8') as f:
-            t = f.read()
-            t = t.replace(self.__private_key_file, privateKey)
-            f.seek(0, 0)
-            f.write(t)
-            f.truncate()
-
-        self.__private_key_file = privateKey
-        pass
-
-    @property
-    def auth_mode(self):
-        return self.__auth_mode
-
-    @property
-    def device_name(self):
-        return self.__device_name
-
-    @property
-    def product_id(self):
-        return self.__product_id
-
-    @property
-    def product_secret(self):
-        return self.__product_secret
-
-    @property
-    def device_secret(self):
-        return self.__device_secret
-
-    @property
-    def ca_file(self):
-        return self.__ca_file
-
-    @property
-    def cert_file(self):
-        return self.__cert_file
-
-    @property
-    def private_key_file(self):
-        return self.__private_key_file
-
-    @property
-    def region(self):
-        return self.__region
-
-    @property
-    def json_data(self):
-        return self.__json_data
 
 class ConnClientProvider(metaclass=SingletonType):
     """
@@ -407,6 +320,10 @@ class ConnClientProvider(metaclass=SingletonType):
     def __init__(self, host, product_id, device_name, device_secret, websocket=False, tls=True, logger=None):
         self.protocol = AsyncConnClient(host, product_id, device_name, device_secret, websocket, tls, logger)
         pass
+    
+    # def __init__(self, host, product_id, device_name, device_secret, websocket=False, tls=True, logger=None):
+    #     self.protocol = AsyncConnClient(host, product_id, device_name, device_secret, websocket, tls, logger)
+    #     pass
 
     def __new__(cls, *args, **kwargs):
         return object.__new__(cls)

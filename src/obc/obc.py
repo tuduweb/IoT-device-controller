@@ -9,6 +9,7 @@ from utils.providers import ConnClientProvider
 
 from obc.manager.manager import TaskManager
 
+import json
 
 class OBCProvider(object):
 
@@ -45,6 +46,11 @@ class OBCProvider(object):
         类似on_connect等explorer和用户层都可能注册的回调在hub层使用专门的函数与之对应
         """
         self.__explorer_callback = {}
+
+        """
+        保存__on_subscribe()返回的mid和qos对,用以判断订阅是否成功
+        """
+        self.__subscribe_res = {}
 
         """ 存放用户注册的回调函数 """
         self.__user_callback = {}
@@ -130,6 +136,12 @@ class OBCProvider(object):
             self.code = -1
             self.status_msg = None
 
+    class ReplyPara(object):
+        def __init__(self):
+            self.timeout_ms = 0
+            self.code = -1
+            self.status_msg = None
+
     def __assert(self, param):
         if param is None or len(param) == 0:
             raise ValueError('Invalid param.')
@@ -148,6 +160,10 @@ class OBCProvider(object):
         ca = self.__device_info.ca_file
         cert = self.__device_info.cert_file
         key = self.__device_info.private_key_file
+
+        uuid = self.__device_info.device_uuid
+        tpiid = self.__device_info.plaform_tpiid
+
         # domain
         # """
         # 腾讯hub设备 海外版的domain需要按照官网格式拼接:product_id
@@ -171,8 +187,8 @@ class OBCProvider(object):
 
         self.__protocol = self.__provider.protocol
 
-        if auth_mode == "CERT":
-            self.__protocol.set_cert_file(ca, cert, key)
+        # if auth_mode == "CERT":
+        #     self.__protocol.set_cert_file(ca, cert, key)
         
         self.__protocol.register_event_callbacks(self.__on_connect,
                                                     self.__on_disconnect,
@@ -399,6 +415,7 @@ class OBCProvider(object):
         client = product_id + device_name
 
         if topic_prefix == "$thing" or topic_prefix == "$template":
+            self.__user_on_message(topic, payload, qos, self.__userdata)
             pass
         elif topic_prefix == "$sys":
             # 获取时间作为内部服务,不通知到用户
@@ -421,7 +438,6 @@ class OBCProvider(object):
 
         pass
     ##### 结束 函数注册到event系统中 #####
-
 
 
     def registerMqttCallback(self, on_connect, on_disconnect,
@@ -554,3 +570,96 @@ class OBCProvider(object):
             #self.__protocol.enable_logger(logger.get_logger())
 
         return logger
+
+    ##### 相关操作方法 #####
+    def subscribe(self, topic, qos):
+        """Subscribe topic
+
+        Subscribe topic
+        Args:
+            topic: topic
+            qos: mqtt qos
+        Returns:
+            success: zero and subscribe mid
+            fail: negative number and subscribe mid
+        """
+        if self.__hub_state is not self.HubState.CONNECTED:
+            raise self.StateError("current state is not CONNECTED")
+
+        if isinstance(topic, tuple):
+            topic, qos = topic
+
+        if isinstance(topic, str):
+            self.__user_topics_request_lock.acquire()
+            rc, mid = self.__protocol.subscribe(topic, qos)
+            if rc == 0:
+                self.__user_topics_subscribe_request[mid] = [(topic, qos)]
+            self.__user_topics_request_lock.release()
+            return rc, mid
+        # topic format [(topic1, qos),(topic2,qos)]
+
+        if isinstance(topic, list):
+            self.__user_topics_request_lock.acquire()
+            rc, mid = self.__protocol.subscribe(topic)
+            if rc == 0:
+                self.__user_topics_subscribe_request[mid] = [topic]
+            self.__user_topics_request_lock.release()
+            return rc, mid
+
+        pass
+
+    def unsubscribe(self, topic):
+        """Unsubscribe topic
+
+        Unsubscribe topic what is subscribed
+        Args:
+            topic: topic
+        Returns:
+            success: zero and unsubscribe mid
+            fail: negative number and unsubscribe mid
+        """
+        if self.__hub_state is not self.HubState.CONNECTED:
+            raise self.StateError("current state is not CONNECTED")
+        unsubscribe_topics = []
+        if topic is None or len(topic) == 0:
+            raise ValueError('Invalid topic.')
+        if isinstance(topic, str):
+            # topic判断
+            unsubscribe_topics.append(topic)
+        elif isinstance(topic, list):
+            for tp in topic:
+                unsubscribe_topics.append(tp)
+            pass
+        with self.__user_topics_unsubscribe_request_lock:
+            if len(unsubscribe_topics) == 0:
+                return self.ErrorCode.ERR_TOPIC_NONE, -1
+            rc, mid = self.__protocol.unsubscribe(unsubscribe_topics)
+            if rc == 0:
+                self.__user_topics_unsubscribe_request[mid] = unsubscribe_topics
+            return rc, mid
+        pass
+
+    def publish(self, topic, payload, qos):
+        """Publish message
+
+        Publish message
+        Args:
+            topic: topic
+            payload: publish message
+            qos: mqtt qos
+        Returns:
+            success: zero and publish mid
+            fail: negative number and publish mid
+        """
+        if self.__hub_state is not self.HubState.CONNECTED:
+            raise self.StateError("current state is not CONNECTED")
+        if topic is None or len(topic) == 0:
+            raise ValueError('Invalid topic.')
+        if qos < 0:
+            raise ValueError('Invalid QoS level.')
+
+        return self.__protocol.publish(topic, json.dumps(payload), qos)
+    
+
+
+    

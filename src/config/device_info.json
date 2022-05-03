@@ -15,15 +15,8 @@
         "devPrivateKeyFile":"YOUR_DEVICE_PRIVATE_KEY_FILE_NAME"
     },
 
-    "subDev":{
-        "subdev_num":3,
-        "subdev_list":
-        [
-                {"sub_productId": "", "sub_devName": ""},
-                {"sub_productId": "", "sub_devName": ""},
-                {"sub_productId": "", "sub_devName": ""}
-        ]
-    },
+    "uuid":"123",
+    "tpiid":"s2fgtej4hk8v",
 
     "region":"china"
 }

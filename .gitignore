@@ -1,0 +1,4 @@
+bin/*.tar.gz
+__pycache__
+.vscode
+logs

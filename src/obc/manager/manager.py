@@ -121,16 +121,18 @@ class TaskManager(object):
         def __event_thread(self):
             if self.__logger is not None:
                 self.__logger.debug("thread runnable enter")
+                
             while True:
                 event, value = self.__message_queue.get()
                 if event == "req_exit":
                     break
                 if self.__event_callback[event] is not None:
                     try:
-                        self.__event_callback[event](value)
+                        self.__event_callback[event](value) # obc.__user_message
                     except Exception as e:
                         if self.__logger is not None:
                             self.__logger.error("thread runnable raise exception:%s" % e)
+                            
             self.__started = False
             if self.__logger is not None:
                 self.__logger.debug("thread runnable exit")
