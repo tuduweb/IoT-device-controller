@@ -3,10 +3,10 @@ import os
 import sys
 import json
 import time
+
 from obc.obc import OBCProvider
 from obc.controller.controller import OBCController, grapCamera
 
-TPIID = "s2fgtej4hk8v"
 _currentFilePath = os.path.split(os.path.realpath(__file__))[0]
 
 # 预留平台控制任务接口
@@ -14,63 +14,73 @@ _currentFilePath = os.path.split(os.path.realpath(__file__))[0]
 #input: 平台下发任务.. argList: 评测脚本, 评测用例, 评测代码地址即版本库
 #output: 给平台的回复, 回复给下发任务后加上_rst的主题 评测结果
 '''
-def on_super_message(topic, payload, qos, userdata):
-    pass
+# def on_super_message(topic, payload, qos, userdata):
+#     pass
 
-def on_tpi_message(topic, payload, qos, userdata):
+# def on_tpi_message(topic, payload, qos, userdata):
 
-    if payload.get('actionId') == 'grapCamera':
-        grapCamera()
-        reply_param = obc.ReplyPara()
-        reply_param.timeout_ms = 5 * 1000
-        reply_param.code = 0
-        reply_param.status_msg = "GrapCameraSuccess"
-        res = {
-            "imageKey": "123.jpg"
-        }
+#     if payload.get('actionId') == 'grapCamera':
+#         grapCamera()
+#         reply_param = obc.ReplyPara()
+#         reply_param.timeout_ms = 5 * 1000
+#         reply_param.code = 0
+#         reply_param.status_msg = "GrapCameraSuccess"
+#         res = {
+#             "imageKey": "123.jpg"
+#         }
 
-        json_out = {
-            "method": "action_reply",
-            "code": reply_param.code,
-            #"clientToken": clientToken,
-            "status": reply_param.status_msg,
-            "response": res
-        }
+#         json_out = {
+#             "method": "action_reply",
+#             "code": reply_param.code,
+#             #"clientToken": clientToken,
+#             "status": reply_param.status_msg,
+#             "response": res
+#         }
 
-        obc.publish(topic + '_rst', json_out, 0)
-        pass
-    pass
+#         obc.publish(topic + '_rst', json_out, 0)
+#         pass
+#     pass
 
 
 
 def on_connect(flags, rc, userdata):
-    logger.debug("%s:flags:%d,rc:%d,userdata:%s" % (sys._getframe().f_code.co_name, flags, rc, userdata))
+    tpiid = obc.get_tpiid()
+    print("tpiid", tpiid)
+    logger.debug("%s:flags:%d,rc:%d,userdata:%s tpiid:%d" % (sys._getframe().f_code.co_name, flags, rc, userdata, tpiid))
     ### 连接上后订阅相关topic
-    obc.subscribe('$thing/down/control/mqtt_' + TPIID, 0)
-    obc.subscribe('$plaform/down/control/mqtt_' + TPIID, 0)
+    obc.subscribe('$thing/down/control/mqtt_' + str(tpiid), 0)
+    obc.subscribe('$plaform/down/control/mqtt_' + str(tpiid), 0)
     pass
 
 def on_disconnect(rc, userdata):
     logger.debug("%s:rc:%d,userdata:%s" % (sys._getframe().f_code.co_name, rc, userdata))
     pass
 
+from obc.utils.upload import upload
 
 def on_message(topic, payload, qos, userdata):
     logger.debug("%s:topic:%s,payload:%s,qos:%s,userdata:%s" % (sys._getframe().f_code.co_name, topic, payload, qos, userdata))
 
     if payload.get('actionId') == 'grapCamera':
-        
-        _res, _data = grapCamera()
+
+        #grapCamera()
+        _res, _data = upload(os.path.join(_currentFilePath, "../demo.jpg"), obc.get_tpiid())
+        #print(_res, _data)
+
+        if _res != 0:
+            logger.error("error when update file : message %s", _data["message"])
+            return
 
         reply_param = obc.ReplyPara()
         reply_param.timeout_ms = 5 * 1000
         reply_param.code = 0
         reply_param.status_msg = "GrapCameraSuccess"
         res = {
-            "imageKey": "123.jpg"
+            "imageKey": os.path.basename(_data["fileKey"])
         }
 
         json_out = {
+            "uuid": payload.get("uuid"),
             "method": "action_reply",
             "code": reply_param.code,
             #"clientToken": clientToken,
@@ -98,7 +108,8 @@ def on_unsubscribe(mid, userdata):
     pass
 
 _deviceFilePath = os.path.join(_currentFilePath, 'config/device_info.json')
-obc = OBCProvider(device_file=_deviceFilePath)
+_appFilePath = os.path.join(_currentFilePath, 'config/app.json')
+obc = OBCProvider(device_file=_deviceFilePath, app_file=_appFilePath)
 
 _logFilePath = os.path.join(_currentFilePath, 'logs/app.log')
 logger = obc.logInit(obc.LoggerLevel.DEBUG, _logFilePath, 1024 * 1024 * 10, 5, enable=True)
@@ -109,6 +120,13 @@ obc.registerMqttCallback(on_connect, on_disconnect,
 
 obc.connect()
 
+# @obc.action.route('grapCamera')
+# def action_grapCamera():
+#     print("hello world")
+#     return "hello world"
 
+# logger.debug("actions %s" % obc.actions())
+
+# MainThread Loop
 while True:
     time.sleep(0.1)

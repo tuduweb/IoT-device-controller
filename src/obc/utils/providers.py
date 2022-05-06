@@ -370,7 +370,7 @@ class AppInfoProvider(object):
 
         # 判断filePath是否存在
         
-        self.__info_property = self.InfoProperty()
+        self.__info_property = InfoProperty()
         self.__info_property.loadFromFile(file_path)
 
     @property
@@ -379,54 +379,53 @@ class AppInfoProvider(object):
         
 
 
-    class InfoProperty(object):
-        def __init__(self, _tpiid = None, _uuid = None) -> None:
-            self.__uuid = _uuid
-            self.__tpiid = _tpiid
+class InfoProperty(object):
+    def __init__(self, _tpiid = None, _uuid = None) -> None:
+        self.uuid = str(_uuid) if _uuid else None
+        self.tpiid = int(_tpiid) if _tpiid else None
 
-            # self.hello = self.HelloWorld()
+    #     self.hello = self.HelloWorld()
 
-            pass
+    #     pass
 
-        # class HelloWorld(object):
-        #     def __init__(self) -> None:
-        #         self.hello = "World"
-        #         pass
-        
-        class JsonEncoder(json.JSONEncoder):
-            def default(self, obj) -> str:
-                if isinstance(obj, object):
-                    return obj.__dict__
-                return super().default(self, obj)
+    # class HelloWorld(object):
+    #     def __init__(self) -> None:
+    #         self.hello = "World"
+    #         pass
+    
+    class JsonEncoder(json.JSONEncoder):
+        def default(self, obj) -> str:
+            if isinstance(obj, object):
+                return obj.__dict__
+            return super().default(self, obj)
 
-        def toJson(self) -> str:
-            #print(json.dumps(self.__dict__))
-            return json.dumps(self.__dict__, cls=self.JsonEncoder, indent=4)
+    def toJson(self) -> str:
+        #print(json.dumps(self.__dict__))
+        return json.dumps(self.__dict__, cls=self.JsonEncoder, indent=4)
 
-        def fromJson(self, jsonStr : str) -> None:
-            #self = 
-            pass
+    def fromJson(self, jsonStr : str) -> None:
+        #self = 
+        pass
 
-        def saveToFile(self, path) -> bool:
-            with open(path, 'w+', encoding='utf-8') as f:
-                t = self.toJson()
-                f.seek(0, 0)
-                f.write(t)
-                f.truncate()
+    def saveToFile(self, path) -> bool:
+        with open(path, 'w+', encoding='utf-8') as f:
+            t = self.toJson()
+            f.seek(0, 0)
+            f.write(t)
+            f.truncate()
 
-        def _loadJsonFromFile(self, path) -> str:
-            with open(path, 'r', encoding="utf-8") as f:
-                return json.load(f)
+    def _loadJsonFromFile(self, path) -> str:
+        with open(path, 'r', encoding="utf-8") as f:
+            return json.load(f)
 
-        def loadFromFile(self, path) -> str:
-            json = self._loadJsonFromFile(path)
-            self.__tpiid = json["tpiid"]
+    def loadFromFile(self, path) -> str:
+        json = self._loadJsonFromFile(path)
+        self.tpiid = json["tpiid"]
 
-        @property
-        def tpiid(self):
-            return self.__tpiid
+        # @property
+        # def tpiid(self):
+        #     return self.__tpiid
 
-    pass
 
 class ConnClientProvider(metaclass=SingletonType):
     """

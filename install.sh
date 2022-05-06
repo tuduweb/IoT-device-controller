@@ -69,6 +69,13 @@ install_apt(){
 install_pipPackage(){
     echo install_pipPackage
     echo ========================================================
+    which pip3 > /dev/null
+    if [ $? -ne 0 ];then
+        #没有安装pip3..
+        echo "no pip3"
+    else
+        pip3 install paho-mqtt==1.5.1
+    fi
 }
 
 install_opencv(){
@@ -81,6 +88,7 @@ install_opencv(){
 #检查Python版本..如果不是支持范围下, 那么自行安装一个版本
 check_python(){
     #
+    echo "check python"
 }
 
 
@@ -123,6 +131,8 @@ gettar(){
     tar -zxvf '/tmp/client.tar.gz' -C $appdir/
     [ $? -ne 0 ] && echo "文件解压失败！" && rm -rf /tmp/client.tar.gz && exit 1 
     [ -f "$appdir/mark" ] || echo '#标识controlClient运行状态的文件，不明勿动！' > $appdir/mark
+
+    rm /tmp/client.tar.gz
 
 }
 
@@ -186,12 +196,17 @@ cat /tmp/clashversion
 [ "$result" = "200" ] && versionsh=$(cat /tmp/clashversion | grep "versionsh" | awk -F "=" '{print $2}')
 [ -z "$release_new" ] && release_new=$versionsh
 
-url_dl=172.20.144.113:8082
+url_dl=172.20.144.113:8080
 tarurl=$url_dl/bin/client.tar.gz
 appdir=~/appdemo
+
+# 查看版本, 是否已经安装
+
+# 根据版本, 查找diff, 增量安装
 
 # 安装依赖库
 install_opencv
 # 主程序tar包
 gettar
 # 运行包中的脚本..进入到下一个阶段?
+bash $appdir/boot.sh
