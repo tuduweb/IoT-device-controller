@@ -22,10 +22,15 @@ import base64
 import random
 import ssl
 import paho.mqtt.client as mqtt
-from utils.codec import Codec
+#from obc.utils.codec import Codec
 
 class AsyncConnClient(object):
 
+    '''
+    host: 连接地址
+    client_id: 随机生成的uuid
+    devicename: ?
+    '''
     def __init__(self, host, client_id, device_name, device_secret,
                     websocket=False, tls=True, logger=None):
         self.__logger = logger
@@ -43,7 +48,7 @@ class AsyncConnClient(object):
         self.__client_id = client_id
 
         self.__certificate = self.Certificate()
-        self.__codec = Codec()
+        #self.__codec = Codec()
         self.__set_mqtt_default_param()
 
         self.__init(host, client_id, device_name, device_secret)
@@ -55,8 +60,10 @@ class AsyncConnClient(object):
             self.key_file = None
 
     def __set_mqtt_default_param(self):
-        self.__mqtt_tls_port = 8883
-        self.__mqtt_tcp_port = 1883
+        self.__mqtt_tls_port = 48835
+        #8883
+        self.__mqtt_tcp_port = 48835
+        #1883
         self.__mqtt_socket_tls_port = 443
         self.__mqtt_socket_tcp_port = 80
         self.__mqtt_protocol = "MQTTv31"
@@ -87,26 +94,26 @@ class AsyncConnClient(object):
 
     #     return username, password
 
-    def _ssl_init(self, key_mode):
-        # 密钥认证
-        if key_mode is True:
-            # context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH, cadata=self.__iot_ca_crt)
-            self.__logger.info("connect with key...")
-            context = self.__codec.Ssl().create_content()
-            self.__mqtt_client.tls_set_context(context)
-        else:
-            self.__logger.info("connect with certificate...")
-            ca = self.__certificate.ca_file
-            cert = self.__certificate.cert_file
-            key = self.__certificate.key_file
-            self.__mqtt_client.tls_set(ca_certs=ca, certfile=cert, keyfile=key,
-                                        cert_reqs=ssl.CERT_REQUIRED, tls_version=ssl.PROTOCOL_SSLv23)
-        pass
+    # def _ssl_init(self, key_mode):
+    #     # 密钥认证
+    #     if key_mode is True:
+    #         # context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH, cadata=self.__iot_ca_crt)
+    #         self.__logger.info("connect with key...")
+    #         context = self.__codec.Ssl().create_content()
+    #         self.__mqtt_client.tls_set_context(context)
+    #     else:
+    #         self.__logger.info("connect with certificate...")
+    #         ca = self.__certificate.ca_file
+    #         cert = self.__certificate.cert_file
+    #         key = self.__certificate.key_file
+    #         self.__mqtt_client.tls_set(ca_certs=ca, certfile=cert, keyfile=key,
+    #                                     cert_reqs=ssl.CERT_REQUIRED, tls_version=ssl.PROTOCOL_SSLv23)
+    #     pass
 
     def __init(self, host, client_id, device_name, device_secret):
         #username, password = self._generate_pwss(client_id, device_secret)
-        username = 'pahotest'
-        password = username
+        username = ""#'pahotest'
+        password = ""#username
         if self.__mqtt_protocol == "MQTTv311":
             mqtt_protocol_version = mqtt.MQTTv311
         elif self.__mqtt_protocol == "MQTTv31":
@@ -194,10 +201,14 @@ class AsyncConnClient(object):
         mqtt_port = self.__mqtt_tls_port
         if self.__tls:
             try:
-                if self.__useWebsocket:
-                    mqtt_port = self.__mqtt_socket_tls_port
-                self._ssl_init(self.__key_mode)
-            except ssl.SSLError as e:
+                # if self.__useWebsocket:
+                #     mqtt_port = self.__mqtt_socket_tls_port
+                # self._ssl_init(self.__key_mode)
+                raise Exception("SSL (self.__tls) unexpect!")
+            # except ssl.SSLError as e:
+            #     self.__logger.error("ssl init error:" + str(e))
+            #     return False
+            except Exception as e:
                 self.__logger.error("ssl init error:" + str(e))
                 return False
         else:
@@ -206,8 +217,8 @@ class AsyncConnClient(object):
                 mqtt_port = self.__mqtt_socket_tcp_port
             pass
         try:
-            self.__logger.debug("connect_async (%s:%d)" % (self.__host, mqtt_port))
-            self.__mqtt_client.connect_async(host=self.__host, port=mqtt_port, keepalive=self.__mqtt_keep_alive)
+            # self.__logger.debug("connect_async (%s:%d)" % (self.__host, mqtt_port))
+            self.__mqtt_client.connect_async(host="121.40.129.71", port=48835, keepalive=self.__mqtt_keep_alive)
         except Exception as e:
             self.__logger.error("mqtt connect with async error:" + str(e))
             return False

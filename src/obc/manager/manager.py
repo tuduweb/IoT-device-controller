@@ -13,7 +13,7 @@
 
 import queue
 import threading
-from utils.providers import LoggerProvider
+from obc.utils.providers import LoggerProvider
 
 class TaskManager(object):
     def __init__(self):

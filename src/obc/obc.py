@@ -2,22 +2,25 @@ import logging
 import threading
 from enum import Enum
 from enum import IntEnum
+import socket
+import json
 
-from utils.providers import LoggerProvider
-from utils.providers import DeviceInfoProvider
-from utils.providers import ConnClientProvider
+from obc.utils.providers import LoggerProvider
+from obc.utils.providers import DeviceInfoProvider
+from obc.utils.providers import AppInfoProvider
+from obc.utils.providers import ConnClientProvider
+from obc.utils.providers import ActionProvider
 
 from obc.manager.manager import TaskManager
 
-import json
 
 class OBCProvider(object):
 
-    def __init__(self, device_file, domain = None, useWebsocket = None):
+    def __init__(self, device_file, app_file, domain = None, useWebsocket = None):
 
-        self.__tls = True
+        self.__tls = False
         self.__useWebsocket = useWebsocket
-        self.__key_mode = True
+        #self.__key_mode = True
         self.__userdata = None#userdata
         self.__provider = None
         self.__protocol = None
@@ -28,6 +31,9 @@ class OBCProvider(object):
         self._logger = self.__log_provider.logger
 
         self.__device_info = DeviceInfoProvider(device_file)
+        self.__app_info = AppInfoProvider(app_file)
+
+        self.__action_provider = ActionProvider(self._logger)
 
         self.__hub_state = self.HubState.INITIALIZED
 
@@ -70,7 +76,19 @@ class OBCProvider(object):
 
 
         pass
+
+
+    def get_tpiid(self):
+        return self.__app_info.tpiid
+
+    @property
+    def action(self):
+        return self.__action_provider
     
+    @property
+    def actions(self):
+        return self.__action_provider.actions
+
     class HubState(Enum):
         """ 连接状态 """
         INITIALIZED = 1
@@ -177,7 +195,7 @@ class OBCProvider(object):
         #         self.__host = product_id + ".ap-guangzhou.iothub.tencentdevices.com"
 
         if domain is None or domain == "":
-            self.__host = "172.20.144.112"
+            self.__host = "121.40.129.71"
 
         if not (domain is None or domain == ""):
             self.__host = domain
@@ -422,7 +440,10 @@ class OBCProvider(object):
             pass
         elif topic_prefix == "$ota" or topic_prefix == "$rrpc":
             pass
-
+        elif topic_prefix == "$action":
+            if payload is not None and isinstance(payload, dict) and payload.get("actionId"):
+                self._logger.info("action match")
+            pass
         elif topic in self.__user_topics:
             if self.__user_callback[topic] is not None:
                 self.__user_callback[topic](topic, qos, payload, self.__userdata)
@@ -661,5 +682,9 @@ class OBCProvider(object):
         return self.__protocol.publish(topic, json.dumps(payload), qos)
     
 
+    def systemFirstInit(self):
+        # 生成UUID
 
+        # 读取平台并配置
+        pass
     

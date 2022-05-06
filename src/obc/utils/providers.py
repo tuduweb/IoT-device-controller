@@ -14,7 +14,7 @@
 import string
 import json
 import threading
-from utils.log.log import Log
+from obc.utils.log.log import Log
 from obc.protocol.protocol import AsyncConnClient # mqtt package
 
 class SingletonType(type):
@@ -203,6 +203,8 @@ class DeviceInfoProvider(object):
         self.__device_uuid = None
         self.__current_tpiid = None
 
+        self.__info_property = self.DeviceInfoProperty()
+
         if self.__logger is not None:
             self.__logger.info('device_info file {}'.format(file_path))
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -225,6 +227,51 @@ class DeviceInfoProvider(object):
                 "device name: {}, product id: {}, product secret: {}, device secret: {}".
                 format(self.__device_name, self.__product_id,
                         self.__product_secret, self.__device_secret))
+
+    class DeviceInfoProperty(object):
+        def __init__(self, _tpiid = None, _uuid = None) -> None:
+            self.uuid = _uuid
+            self.tpiid = _tpiid
+
+            self.hello = self.HelloWorld()
+
+            pass
+
+        class HelloWorld(object):
+            def __init__(self) -> None:
+                self.hello = "World"
+                pass
+        
+        class JsonEncoder(json.JSONEncoder):
+            def default(self, obj) -> str:
+                if isinstance(obj, object):
+                    return obj.__dict__
+                return super().default(self, obj)
+
+        def toJson(self) -> str:
+            #print(json.dumps(self.__dict__))
+            return json.dumps(self.__dict__, cls=self.JsonEncoder, indent=4)
+
+        def fromJson(self, jsonStr : str) -> None:
+            #self = 
+            pass
+
+        def saveToFile(self, path) -> bool:
+            with open(path, 'w+', encoding='utf-8') as f:
+                t = self.toJson()
+                f.seek(0, 0)
+                f.write(t)
+                f.truncate()
+
+        def loadFromFile(self, path) -> str:
+            with open(path, 'r', encoding="utf-8") as f:
+                return json.load(f)
+
+        pass
+
+    @property
+    def infoProperty(self):
+        return self.__info_property
 
 
     def _init_deviceInfo_file(self):
@@ -312,6 +359,74 @@ class DeviceInfoProvider(object):
     def json_data(self):
         return self.__json_data
 
+class AppInfoProvider(object):
+    
+    def __init__(self, file_path):
+        self.__file_path = file_path
+        # self.__logger = logger
+        self.__log_provider = LoggerProvider()
+        self.__logger = self.__log_provider.logger
+        self.__logger.info('app_info file {}'.format(file_path))
+
+        # 判断filePath是否存在
+        
+        self.__info_property = self.InfoProperty()
+        self.__info_property.loadFromFile(file_path)
+
+    @property
+    def tpiid(self):
+        return self.__info_property.tpiid
+        
+
+
+    class InfoProperty(object):
+        def __init__(self, _tpiid = None, _uuid = None) -> None:
+            self.__uuid = _uuid
+            self.__tpiid = _tpiid
+
+            # self.hello = self.HelloWorld()
+
+            pass
+
+        # class HelloWorld(object):
+        #     def __init__(self) -> None:
+        #         self.hello = "World"
+        #         pass
+        
+        class JsonEncoder(json.JSONEncoder):
+            def default(self, obj) -> str:
+                if isinstance(obj, object):
+                    return obj.__dict__
+                return super().default(self, obj)
+
+        def toJson(self) -> str:
+            #print(json.dumps(self.__dict__))
+            return json.dumps(self.__dict__, cls=self.JsonEncoder, indent=4)
+
+        def fromJson(self, jsonStr : str) -> None:
+            #self = 
+            pass
+
+        def saveToFile(self, path) -> bool:
+            with open(path, 'w+', encoding='utf-8') as f:
+                t = self.toJson()
+                f.seek(0, 0)
+                f.write(t)
+                f.truncate()
+
+        def _loadJsonFromFile(self, path) -> str:
+            with open(path, 'r', encoding="utf-8") as f:
+                return json.load(f)
+
+        def loadFromFile(self, path) -> str:
+            json = self._loadJsonFromFile(path)
+            self.__tpiid = json["tpiid"]
+
+        @property
+        def tpiid(self):
+            return self.__tpiid
+
+    pass
 
 class ConnClientProvider(metaclass=SingletonType):
     """
@@ -327,6 +442,25 @@ class ConnClientProvider(metaclass=SingletonType):
 
     def __new__(cls, *args, **kwargs):
         return object.__new__(cls)
+
+
+class ActionProvider(metaclass=SingletonType):
+    """
+    使用单例模式构建,保证对象只有一份
+    """
+    def __init__(self, logger = None):
+        self.__actions = {}
+        pass
+
+    def route(self, action_str):
+        def decorator(f):
+            self.__actions[action_str] = f # none args
+            return f
+        return decorator
+
+    @property
+    def actions(self):
+        return self.__actions
 
 class LoggerProvider(metaclass=SingletonType):
     """
