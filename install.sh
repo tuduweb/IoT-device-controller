@@ -73,9 +73,20 @@ install_pipPackage(){
     if [ $? -ne 0 ];then
         #没有安装pip3..
         echo "no pip3"
-    else
-        pip3 install paho-mqtt==1.5.1
+        sudo apt-get install python3-distutils
+        webget /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py
+        
+        cd /tmp/
+        python3 ./get-pip.py
+
+        which pip3 > /dev/null
+
+        if [ $? -ne 0 ];then
+            export PATH=$PATH:/home/pi/.local/bin
+        fi
     fi
+
+    pip3 install paho-mqtt==1.5.1
 }
 
 install_opencv(){
