@@ -41,15 +41,29 @@ _currentFilePath = os.path.split(os.path.realpath(__file__))[0]
 #         pass
 #     pass
 
-
+#### 待封装
+import time
+import cv2
+def grapCamera() -> [int, str]:
+    cap=cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    start_time = time.time()
+    sucess,img=cap.read()
+    cv2.imwrite('/tmp/touge-grap.jpg', img)
+    end_time = time.time()
+    print("Time:",end_time-start_time)
+    cap.release()
+    return 0, '/tmp/touge-grap.jpg'
+########## END
 
 def on_connect(flags, rc, userdata):
     tpiid = obc.get_tpiid()
     print("tpiid", tpiid)
     logger.debug("%s:flags:%d,rc:%d,userdata:%s tpiid:%d" % (sys._getframe().f_code.co_name, flags, rc, userdata, tpiid))
     ### 连接上后订阅相关topic
-    obc.subscribe('$thing/down/control/mqtt_' + str(tpiid), 0)
-    obc.subscribe('$plaform/down/control/mqtt_' + str(tpiid), 0)
+    obc.subscribe('$thing/control/mqtt_' + str(tpiid), 0)
+    obc.subscribe('$plaform/control/mqtt_' + str(tpiid), 0)
     pass
 
 def on_disconnect(rc, userdata):
@@ -61,16 +75,21 @@ from obc.utils.upload import upload
 def on_message(topic, payload, qos, userdata):
     logger.debug("%s:topic:%s,payload:%s,qos:%s,userdata:%s" % (sys._getframe().f_code.co_name, topic, payload, qos, userdata))
 
+    ### 需要加入其他判断
     if payload.get('actionId') == 'grapCamera':
 
-        #grapCamera()
-        _res, _data = upload(os.path.join(_currentFilePath, "../demo.jpg"), obc.get_tpiid())
+        _res, _filePath = grapCamera()
+        if _res != 0:
+            logger.error("error occur when grapCamera")
+            pass
+
+        _res, _data = upload(os.path.join(_currentFilePath, _filePath), obc.get_tpiid())
         #print(_res, _data)
 
         if _res != 0:
             logger.error("error when update file : message %s", _data["message"])
             return
-
+        
         reply_param = obc.ReplyPara()
         reply_param.timeout_ms = 5 * 1000
         reply_param.code = 0

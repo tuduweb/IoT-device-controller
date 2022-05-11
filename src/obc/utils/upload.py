@@ -11,22 +11,27 @@ _currentFilePath = os.path.split(os.path.realpath(__file__))[0]
 def upload(pathToFile, tpiId = None, fileName = None) -> Tuple[int, dict]:
     #构建formdata
     url = " https://data.educoder.net/api/myshixuns/upload_file"
+    filekey = ""
 
-    #filekey = 'pic-%s.jpg' % int(time.time())
+    if fileName == "":
+        filekey = 'pic-%s.jpg' % int(time.time())
 
-    if fileName == None:
+    if filekey == "":
         files = {'file': open(pathToFile, 'rb')}
     else:
-        files = {'file': (fileName, open(pathToFile, 'rb'))}
+        files = {'file': (filekey, open(pathToFile, 'rb'))}
 
     headers = {}
     #注意 headers里主要注释掉Content-type才可以上传成功
     r = requests.post(url=url, data={'tpiID': tpiId}, files=files, headers=headers) #4597995
     
+    #print("fileKey", filekey)
+
     res = json.loads(r.text)
+    print("res", res)
     if res["status"] == 0:
         # 上传成功
-        return 0, {"fileKey": pathToFile}
+        return 0, {"fileKey": pathToFile if filekey == "" else filekey}
         pass
     return -1, res
 
