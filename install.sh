@@ -212,6 +212,9 @@ appdir=~/appdemo
 
 # 根据版本, 查找diff, 增量安装
 
+# 处理tpiid
+echo $tpiid > /tmp/educoder.cfg
+
 # 主程序tar包, 和其他程序打包到了一块 故一次性下载
 getMainZip
 

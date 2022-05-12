@@ -1,4 +1,5 @@
 bin/*.tar.gz
+bin/*.zip
 __pycache__
 .vscode
 logs

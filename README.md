@@ -4,6 +4,8 @@
 
 ```bash
 export url='http://42.192.50.210:8082/' && export tpiid=10779044 && echo $tpiid > /tmp/educoder.cfg && wget -q -O /tmp/install.sh $url/install.sh && bash /tmp/install.sh
+
+export url='http://42.192.50.210:8082/' && export tpiid=10779044 && wget -q -O /tmp/install.sh $url/install.sh && bash /tmp/install.sh
 ```
 
 适配平台
