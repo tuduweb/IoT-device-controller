@@ -8,18 +8,15 @@ from typing import Tuple
 
 _currentFilePath = os.path.split(os.path.realpath(__file__))[0]
 
-def upload(pathToFile, tpiId = None, fileName = None) -> Tuple[int, dict]:
+def upload(pathToFile, tpiId = None, fileName = "") -> Tuple[int, dict]:
     #构建formdata
     url = " https://data.educoder.net/api/myshixuns/upload_file"
-    filekey = ""
 
     if fileName == "":
-        filekey = 'pic-%s.jpg' % int(time.time())
+        #filekey = 'pic-%s.jpg' % int(time.time())
+        fileName = os.path.basename(pathToFile)
 
-    if filekey == "":
-        files = {'file': open(pathToFile, 'rb')}
-    else:
-        files = {'file': (filekey, open(pathToFile, 'rb'))}
+    files = {'file': (fileName, open(pathToFile, 'rb'))}
 
     headers = {}
     #注意 headers里主要注释掉Content-type才可以上传成功
@@ -31,7 +28,7 @@ def upload(pathToFile, tpiId = None, fileName = None) -> Tuple[int, dict]:
     print("res", res)
     if res["status"] == 0:
         # 上传成功
-        return 0, {"fileKey": pathToFile if filekey == "" else filekey}
+        return 0, {"fileKey": pathToFile if fileName == "" else fileName}
         pass
     return -1, res
 

@@ -432,7 +432,7 @@ class OBCProvider(object):
         product_id = topic_split[pos + 1:len(topic_split)]
         client = product_id + device_name
 
-        if topic_prefix == "$thing" or topic_prefix == "$template":
+        if topic_prefix == "$thing" or topic_prefix == "$template" or topic == str(self.get_tpiid()):
             self.__user_on_message(topic, payload, qos, self.__userdata)
             pass
         elif topic_prefix == "$sys":

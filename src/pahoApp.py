@@ -44,7 +44,7 @@ _currentFilePath = os.path.split(os.path.realpath(__file__))[0]
 #### 待封装
 import time
 import cv2
-def grapCamera() -> [int, str]:
+def grapCamera():
     cap=cv2.VideoCapture(0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
@@ -64,6 +64,9 @@ def on_connect(flags, rc, userdata):
     ### 连接上后订阅相关topic
     obc.subscribe('$thing/control/mqtt_' + str(tpiid), 0)
     obc.subscribe('$plaform/control/mqtt_' + str(tpiid), 0)
+
+    #平台适配
+    obc.subscribe(str(tpiid), 0)
     pass
 
 def on_disconnect(rc, userdata):
@@ -75,39 +78,106 @@ from obc.utils.upload import upload
 def on_message(topic, payload, qos, userdata):
     logger.debug("%s:topic:%s,payload:%s,qos:%s,userdata:%s" % (sys._getframe().f_code.co_name, topic, payload, qos, userdata))
 
-    ### 需要加入其他判断
-    if payload.get('actionId') == 'grapCamera':
+    if topic == str(obc.get_tpiid()) and payload.get('testCases'):
+        testCases = payload.get('testCases')
+        if isinstance(testCases, str):
+            testCases = json.loads(testCases)
+        # 暂时只考虑一个case的情况
+        print(testCases[0], type(testCases[0]))
+        testCase = testCases[0]
+        
+        params = json.loads(testCase.get('input')) #python dict
+        print(testCase.get('input'), params, type(params))
 
-        _res, _filePath = grapCamera()
-        if _res != 0:
-            logger.error("error occur when grapCamera")
+
+
+
+        if(params.get('actionId') == 'checkLink'):
+
+            _res = os.system("echo "+ str(int(time.time())) +" > /tmp/checkLink.txt")
+
+            _res, _data = upload("/tmp/checkLink.txt", obc.get_tpiid(),  os.path.basename("checkLink.txt"))
+            json_out = {
+                "uuid": payload.get("uuid"),
+            }
+            obc.publish(topic + '_rst', json_out, 0)
+
             pass
 
-        _res, _data = upload(os.path.join(_currentFilePath, _filePath), obc.get_tpiid())
-        #print(_res, _data)
 
-        if _res != 0:
-            logger.error("error when update file : message %s", _data["message"])
-            return
+
+        elif(params.get('actionId') == 'grapCamera'):
+
+            #_res, _filePath = grapCamera()
+            _res = 0
+            _filePath = "/home/hehao/remoteControl/IoT-device-controller/demo.jpg"
+            if _res != 0:
+                logger.error("error occur when grapCamera")
+                pass
+
+            _res, _data = upload(os.path.join(_currentFilePath, _filePath), obc.get_tpiid(),  os.path.basename(_filePath))
+            #print(_res, _data)
+
+            if _res != 0:
+                logger.error("error when update file : message %s", _data["message"])
+                return
+            
+            reply_param = obc.ReplyPara()
+            reply_param.timeout_ms = 5 * 1000
+            reply_param.code = 0
+            reply_param.status_msg = "GrapCameraSuccess"
+            res = {
+                "imageKey": os.path.basename(_data["fileKey"])
+            }
+
+            json_out = {
+                "uuid": payload.get("uuid"),
+                "method": "action_reply",
+                "code": reply_param.code,
+                #"clientToken": clientToken,
+                "status": reply_param.status_msg,
+                "response": res
+            }
+
+            obc.publish(topic + '_rst', json_out, 0)
+
+
+    # ### 需要加入其他判断
+    # if payload.get('actionId') == 'grapCamera' or topic == str(obc.get_tpiid()):
+
+    #     #_res, _filePath = grapCamera()
+    #     _res = 0
+    #     _filePath = "/home/hehao/remoteControl/IoT-device-controller/demo.jpg"
+    #     if _res != 0:
+    #         logger.error("error occur when grapCamera")
+    #         pass
+
+    #     _res, _data = upload(os.path.join(_currentFilePath, _filePath), obc.get_tpiid())
+    #     #print(_res, _data)
+
+    #     if _res != 0:
+    #         logger.error("error when update file : message %s", _data["message"])
+    #         return
         
-        reply_param = obc.ReplyPara()
-        reply_param.timeout_ms = 5 * 1000
-        reply_param.code = 0
-        reply_param.status_msg = "GrapCameraSuccess"
-        res = {
-            "imageKey": os.path.basename(_data["fileKey"])
-        }
+    #     reply_param = obc.ReplyPara()
+    #     reply_param.timeout_ms = 5 * 1000
+    #     reply_param.code = 0
+    #     reply_param.status_msg = "GrapCameraSuccess"
+    #     res = {
+    #         "imageKey": os.path.basename(_data["fileKey"])
+    #     }
 
-        json_out = {
-            "uuid": payload.get("uuid"),
-            "method": "action_reply",
-            "code": reply_param.code,
-            #"clientToken": clientToken,
-            "status": reply_param.status_msg,
-            "response": res
-        }
+    #     json_out = {
+    #         "uuid": payload.get("uuid"),
+    #         "method": "action_reply",
+    #         "code": reply_param.code,
+    #         #"clientToken": clientToken,
+    #         "status": reply_param.status_msg,
+    #         "response": res
+    #     }
 
-        obc.publish(topic + '_rst', json_out, 0)
+    #     obc.publish(topic + '_rst', json_out, 0)
+    #     #obc.publish(str(obc.get_tpiid()) + '_rst', {}, 0)
 
     pass
 
