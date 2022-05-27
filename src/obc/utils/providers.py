@@ -382,7 +382,7 @@ class AppInfoProvider(object):
 class InfoProperty(object):
     def __init__(self, _tpiid = None, _uuid = None) -> None:
         self.uuid = str(_uuid) if _uuid else None
-        self.tpiid = int(_tpiid) if _tpiid else None
+        self.tpiid = str(_tpiid) if _tpiid else None
 
     #     self.hello = self.HelloWorld()
 
