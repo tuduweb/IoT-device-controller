@@ -11,7 +11,7 @@ export url='http://42.192.50.210:8082/' && export tpiid=10779044 && wget -q -O /
 适配平台
 
 ```bash
-export tpiID=10681875 && wget -O userfiles.zip https://data.educoder.net/api/myshixuns/download_file.json?tpiID=10681875 && unzip -d userfiles/ userfiles.zip && cd userfiles/ && sh run.sh
+export tpiID=10681875 && wget -O userfiles.zip https://website/api/myshixuns/download_file.json?tpiID=10681875 && unzip -d userfiles/ userfiles.zip && cd userfiles/ && sh run.sh
 ```
 
 ### 注意事项
