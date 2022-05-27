@@ -143,6 +143,9 @@ def on_message(topic, payload, qos, userdata):
 
             obc.publish(topic + '_rst', json_out, 0)
 
+        elif(params.get('actionId') == 'controlLed'):
+            pass
+
 
     # ### 需要加入其他判断
     # if payload.get('actionId') == 'grapCamera' or topic == str(obc.get_tpiid()):
